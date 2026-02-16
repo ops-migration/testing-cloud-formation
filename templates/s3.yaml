@@ -1,11 +1,16 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: Simple S3 Bucket Creation
 
+Parameters:
+  BucketName:
+    Type: String
+    Default: my-simple-cloudformation-bucket-1202027
+    Description: s3 bucket name to be created
 Resources:
   MyS3Bucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: my-simple-cloudformation-bucket-1202026
+      BucketName: !Ref BucketName
       VersioningConfiguration:
         Status: Enabled
 
