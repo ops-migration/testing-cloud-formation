@@ -1,0 +1,19 @@
+name: Deploy CloudFormation Templates
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy-cloudformation:
+    runs-on:
+      - codebuild-shared-workflow-${{ github.run_id }}-${{ github.run_attempt }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Copy templates to S3
+        run: |
+          aws s3 cp templates/ s3://ecs-migration-cloud-formation-templates/ --recursive --exclude "*" --include "*.yaml"
