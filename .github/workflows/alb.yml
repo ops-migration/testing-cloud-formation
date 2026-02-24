@@ -1,4 +1,4 @@
-name: CD - ecs-template
+name: CD - alb-template
 
 on:
   push:
