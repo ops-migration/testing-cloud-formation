@@ -21,3 +21,5 @@ Outputs:
   ECSClusterName:
     Description: ECS Cluster Name
     Value: !GetAtt ECSStack.Outputs.ECSClusterName
+
+    
