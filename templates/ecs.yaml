@@ -14,12 +14,6 @@ Parameters:
   PrivateSubnet2:
     Type: AWS::EC2::Subnet::Id
 
-  ALBSecurityGroup:
-    Type: AWS::EC2::SecurityGroup::Id
-
-  ALBTargetGroupArn:
-    Type: String
-
   InstanceType:
     Type: String
     Default: t4g.small
