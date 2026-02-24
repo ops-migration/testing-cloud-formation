@@ -11,3 +11,4 @@ jobs:
     with:
       aws-region: "us-east-1"
       cf-stack-name: "ecs-stack" 
+      template-file: "ecs.yaml"
