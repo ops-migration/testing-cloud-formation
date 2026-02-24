@@ -4,12 +4,12 @@ Resources:
   ECSStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://s3.amazonaws.com/cf-templates-bucket/templates/ecs.yaml
+      TemplateURL: https://ecs-migration-cloud-formation-templates.s3.us-east-1.amazonaws.com/templates/ecs.yaml
       Parameters:
         Environment: dev
-        VpcId: vpc-0abc1234def567890
-        PrivateSubnet1: subnet-0aaa1111bbb22222
-        PrivateSubnet2: subnet-0ccc3333ddd44444
+        VpcId: vpc-0219d51cdf099f663
+        PrivateSubnet1: subnet-0cfd97d93dcb38aff
+        PrivateSubnet2: subnet-0beccc540fd135816
         KeyPairName: dev-ecs-keypair
         InstanceType: t4g.small
       Tags:
