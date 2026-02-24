@@ -1,0 +1,247 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: ECS Nested Stack - ECS Cluster backed by EC2 ASG (t4g.small, min/max/desired=1)
+
+Parameters:
+  Environment:
+    Type: String
+
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet::Id
+
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet::Id
+
+  ALBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup::Id
+
+  ALBTargetGroupArn:
+    Type: String
+
+  InstanceType:
+    Type: String
+    Default: t4g.small
+    AllowedValues: [t4g.small, t4g.medium]
+    Description: EC2 instance type for ECS container instances
+
+  KeyPairName:
+    Type: AWS::EC2::KeyPair::KeyName
+
+Mappings:
+  # Latest ECS-optimized AMI per region (update as needed)
+  AWSRegionToAMI:
+    us-east-1:
+      AMIID: ami-0071c8c431eea0edb
+
+Resources:
+
+  # ── ECS Cluster ───────────────────────────────────────────────────────────
+  ECSCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Sub ${Environment}-ecs-cluster
+      ClusterSettings:
+        - Name: containerInsights
+          Value: enabled
+      Tags:
+        - Key: Name
+          Value: !Sub ${Environment}-ecs-cluster
+        - Key: Environment
+          Value: !Ref Environment
+
+  # ── IAM Role for ECS EC2 Instances ────────────────────────────────────────
+  ECSInstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${Environment}-ecs-instance-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+
+  ECSInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      InstanceProfileName: !Sub ${Environment}-ecs-instance-profile
+      Roles:
+        - !Ref ECSInstanceRole
+
+  # ── IAM Role for ECS Tasks ─────────────────────────────────────────────────
+  ECSTaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${Environment}-ecs-task-execution-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+
+  # ── Security Group for ECS Instances ──────────────────────────────────────
+  ECSInstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub ${Environment}-ecs-instance-sg
+      GroupDescription: Security group for ECS EC2 container instances
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        # Allow all traffic from ALB
+        - IpProtocol: tcp
+          FromPort: 0
+          ToPort: 65535
+          SourceSecurityGroupId: !Ref ALBSecurityGroup
+          Description: Allow all traffic from ALB
+        # Allow ECS dynamic port range
+        - IpProtocol: tcp
+          FromPort: 32768
+          ToPort: 65535
+          SourceSecurityGroupId: !Ref ALBSecurityGroup
+          Description: Allow ECS dynamic port mapping from ALB
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: !Sub ${Environment}-ecs-instance-sg
+        - Key: Environment
+          Value: !Ref Environment
+
+  # ── CloudWatch Log Group ──────────────────────────────────────────────────
+  ECSLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /ecs/${Environment}-cluster
+      RetentionInDays: 7   # short retention for dev
+
+  # ── Launch Template ────────────────────────────────────────────────────────
+  ECSLaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateName: !Sub ${Environment}-ecs-launch-template
+      LaunchTemplateData:
+        ImageId: !FindInMap [AWSRegionToAMI, !Ref AWS::Region, AMIID]
+        InstanceType: !Ref InstanceType
+        KeyName: !Ref KeyPairName
+        IamInstanceProfile:
+          Arn: !GetAtt ECSInstanceProfile.Arn
+        SecurityGroupIds:
+          - !Ref ECSInstanceSecurityGroup
+        Monitoring:
+          Enabled: true
+        BlockDeviceMappings:
+          - DeviceName: /dev/xvda
+            Ebs:
+              VolumeSize: 30
+              VolumeType: gp3
+              DeleteOnTermination: true
+              Encrypted: true
+        UserData:
+          Fn::Base64: !Sub |
+            #!/bin/bash
+            set -ex
+
+            # Register instance with ECS cluster
+            echo ECS_CLUSTER=${ECSCluster} >> /etc/ecs/ecs.config
+            echo ECS_ENABLE_CONTAINER_METADATA=true >> /etc/ecs/ecs.config
+            echo ECS_ENABLE_TASK_IAM_ROLE=true >> /etc/ecs/ecs.config
+
+            # Install SSM Agent (included in ECS AMI, ensure it runs)
+            systemctl enable amazon-ssm-agent
+            systemctl start amazon-ssm-agent
+
+            # Update packages
+            apt update -y
+
+        TagSpecifications:
+          - ResourceType: instance
+            Tags:
+              - Key: Name
+                Value: !Sub ${Environment}-ecs-instance
+              - Key: Environment
+                Value: !Ref Environment
+
+  # ── Auto Scaling Group ────────────────────────────────────────────────────
+  ECSAutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      AutoScalingGroupName: !Sub ${Environment}-ecs-asg
+      MinSize: '1'
+      MaxSize: '1'
+      DesiredCapacity: '1'
+      VPCZoneIdentifier:
+        - !Ref PrivateSubnet1
+        - !Ref PrivateSubnet2
+      LaunchTemplate:
+        LaunchTemplateId: !Ref ECSLaunchTemplate
+        Version: !GetAtt ECSLaunchTemplate.LatestVersionNumber
+      HealthCheckType: EC2
+      HealthCheckGracePeriod: 300
+      NewInstancesProtectedFromScaleIn: false
+      Tags:
+        - Key: Name
+          Value: !Sub ${Environment}-ecs-asg
+          PropagateAtLaunch: true
+        - Key: Environment
+          Value: !Ref Environment
+          PropagateAtLaunch: true
+    UpdatePolicy:
+      AutoScalingRollingUpdate:
+        MinInstancesInService: 0
+        MaxBatchSize: 1
+        PauseTime: PT5M
+        WaitOnResourceSignals: false
+
+Outputs:
+  ECSClusterName:
+    Description: ECS Cluster Name
+    Value: !Ref ECSCluster
+    Export:
+      Name: !Sub ${AWS::StackName}-ECSClusterName
+
+  ECSClusterArn:
+    Description: ECS Cluster ARN
+    Value: !GetAtt ECSCluster.Arn
+    Export:
+      Name: !Sub ${AWS::StackName}-ECSClusterArn
+
+  ECSInstanceSecurityGroupId:
+    Description: ECS Instance Security Group ID
+    Value: !Ref ECSInstanceSecurityGroup
+    Export:
+      Name: !Sub ${AWS::StackName}-ECSInstanceSGId
+
+  ECSTaskExecutionRoleArn:
+    Description: ECS Task Execution Role ARN
+    Value: !GetAtt ECSTaskExecutionRole.Arn
+    Export:
+      Name: !Sub ${AWS::StackName}-ECSTaskExecutionRoleArn
+
+  ECSAutoScalingGroupName:
+    Description: ECS ASG Name
+    Value: !Ref ECSAutoScalingGroup
+    Export:
+      Name: !Sub ${AWS::StackName}-ECSASGName
+
+  ECSLogGroupName:
+    Description: CloudWatch Log Group for ECS
+    Value: !Ref ECSLogGroup
+    Export:
+      Name: !Sub ${AWS::StackName}-ECSLogGroupName

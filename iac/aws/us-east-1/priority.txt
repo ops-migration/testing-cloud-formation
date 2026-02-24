@@ -1,0 +1,13 @@
+
+
+1. Deploy VPC  (no dependency)
+2. Deploy ECS (dependency - Vpc and subnet id's)
+3. Deploy ALB (dependency - Vpc and subnet id's)
+4. IAM execution role (no dependency)
+5. IAM task role (no dependency)
+6. Deploy ECR (no dependency)
+7. Deploy s3 (no dependency)
+8. Secret Manager (no dependency)
+9. Target group (dependency - VpcId and ALB ARN)
+10. ECS Task def (dependency -  ECR image, task and execution role arn)
+11. ECS Service (dependency - ECS task def , target group)

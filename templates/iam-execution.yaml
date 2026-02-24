@@ -1,0 +1,48 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: IAM Stack - Task Execution Role
+
+Parameters:
+  Environment:
+    Type: String
+  AppName:
+    Type: String
+
+Resources:
+  # ── Task Execution Role ────────────────────────────────────────────────────
+  # Used by ECS agent to pull images, write logs
+  ECSTaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${Environment}-${AppName}-execution-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+      Policies:
+        - PolicyName: ECRAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ecr:GetAuthorizationToken
+                  - ecr:BatchCheckLayerAvailability
+                  - ecr:GetDownloadUrlForLayer
+                  - ecr:BatchGetImage
+                Resource: "*"
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Name
+          Value: !Ref AppName
+Outputs:
+  ExecutionRoleArn:
+    Description: Task Execution Role ARN
+    Value: !GetAtt ECSTaskExecutionRole.Arn
+    Export:
+      Name: !Sub ${AWS::StackName}-ExecutionRoleArn

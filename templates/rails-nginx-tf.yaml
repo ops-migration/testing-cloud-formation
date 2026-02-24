@@ -1,0 +1,99 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Task Definition - Double Container (Nginx + Rails sidecar)
+
+Parameters:
+  Environment:
+    Type: String
+  AppName:
+    Type: String
+  RailsImage:
+    Type: String
+  NginxImage:
+    Type: String
+  RailsContainerPort:
+    Type: Number
+    Default: 3000
+  NginxContainerPort:
+    Type: Number
+    Default: 80
+  TaskCPU:
+    Type: String
+    Default: "512"
+  TaskMemory:
+    Type: String
+    Default: "1024"
+  TaskRoleArn:
+    Type: String
+  ExecutionRoleArn:
+    Type: String
+
+Resources:
+  RailsLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /ecs/${Environment}/${AppName}/rails
+      RetentionInDays: 7
+
+  NginxLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /ecs/${Environment}/${AppName}/nginx
+      RetentionInDays: 7
+
+  TaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub ${Environment}-${AppName}-double
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - EC2
+      Cpu: !Ref TaskCPU
+      Memory: !Ref TaskMemory
+      TaskRoleArn: !Ref TaskRoleArn
+      ExecutionRoleArn: !Ref ExecutionRoleArn
+      ContainerDefinitions:
+
+        # ── Rails Container (non-essential port — internal only) ─────────────
+        - Name: rails
+          Image: !Ref RailsImage
+          Essential: true
+          Environment:
+            - Name: RAILS_ENV
+              Value: !Ref Environment
+            - Name: PORT
+              Value: !Sub "${RailsContainerPort}"
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref RailsLogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: rails
+          Secrets:
+            - Name: DATABASE_URL
+              ValueFrom: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${Environment}/${AppName}/DATABASE_URL
+
+        # ── Nginx Container (public-facing, proxies to Rails) ───────────────
+        - Name: nginx
+          Image: !Ref NginxImage
+          Essential: true
+          PortMappings:
+            - ContainerPort: !Ref NginxContainerPort
+              HostPort: 0          # dynamic port mapping for EC2
+              Protocol: tcp
+          Links:
+            - rails               # allows nginx to reach http://rails:3000
+          DependsOn:
+            - ContainerName: rails
+              Condition: HEALTHY
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref NginxLogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: nginx
+Outputs:
+  TaskDefinitionArn:
+    Description: Task Definition ARN
+    Value: !Ref TaskDefinition
+    Export:
+      Name: !Sub ${AWS::StackName}-TaskDefinitionArn

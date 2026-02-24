@@ -1,0 +1,84 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Target Group Stack - with Host-Header Listener Rule on existing ALB
+
+Parameters:
+  Environment:
+    Type: String
+  AppName:
+    Type: String
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+  ALBListenerArn:
+    Type: String
+    Description: Existing ALB Listener ARN (HTTP or HTTPS)
+  HostHeader:
+    Type: String
+    Description: Host header to match e.g. myapp.example.com
+  TargetPort:
+    Type: Number
+    Default: 80
+    Description: Port containers are listening on (80 for nginx, 3000 for rails-only)
+  # Priority must be unique per listener — set per app
+  ListenerRulePriority:
+    Type: Number
+    Default: 100
+
+Resources:
+
+  TargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub ${Environment}-${AppName}-tg
+      VpcId: !Ref VpcId
+      Protocol: HTTP
+      Port: !Ref TargetPort
+      TargetType: instance
+      HealthCheckEnabled: true
+      HealthCheckProtocol: HTTP
+      HealthCheckPath: /health
+      HealthCheckIntervalSeconds: 30
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 3
+      Matcher:
+        HttpCode: '200'
+      TargetGroupAttributes:
+        - Key: deregistration_delay.timeout_seconds
+          Value: '30'
+        - Key: load_balancing.algorithm.type
+          Value: least_outstanding_requests
+      Tags:
+        - Key: Name
+          Value: !Sub ${Environment}-${AppName}-tg
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: App
+          Value: !Ref AppName
+
+  # ── Host-Header Listener Rule ──────────────────────────────────────────────
+  ALBListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      ListenerArn: !Ref ALBListenerArn
+      Priority: !Ref ListenerRulePriority
+      Conditions:
+        - Field: host-header
+          HostHeaderConfig:
+            Values:
+              - !Ref HostHeader
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref TargetGroup
+
+Outputs:
+  TargetGroupArn:
+    Description: Target Group ARN
+    Value: !Ref TargetGroup
+    Export:
+      Name: !Sub ${AWS::StackName}-TargetGroupArn
+
+  TargetGroupName:
+    Description: Target Group Name
+    Value: !GetAtt TargetGroup.TargetGroupName
+    Export:
+      Name: !Sub ${AWS::StackName}-TargetGroupName

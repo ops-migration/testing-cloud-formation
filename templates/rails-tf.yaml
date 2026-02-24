@@ -1,0 +1,80 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Task Definition - Single Container (Rails only)
+
+Parameters:
+  Environment:
+    Type: String
+  AppName:
+    Type: String
+  RailsImage:
+    Type: String
+  RailsContainerPort:
+    Type: Number
+    Default: 3000
+  TaskCPU:
+    Type: String
+    Default: "512"
+  TaskMemory:
+    Type: String
+    Default: "1024"
+  TaskRoleArn:
+    Type: String
+  ExecutionRoleArn:
+    Type: String
+
+Resources:
+  CloudWatchLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /ecs/${Environment}/${AppName}/rails
+      RetentionInDays: 7
+
+  TaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub ${Environment}-${AppName}-single
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - EC2
+      Cpu: !Ref TaskCPU
+      Memory: !Ref TaskMemory
+      TaskRoleArn: !Ref TaskRoleArn
+      ExecutionRoleArn: !Ref ExecutionRoleArn
+      ContainerDefinitions:
+        - Name: rails
+          Image: !Ref RailsImage
+          Essential: true
+          PortMappings:
+            - ContainerPort: !Ref RailsContainerPort
+              HostPort: 0          # dynamic port mapping for EC2
+              Protocol: tcp
+          Environment:
+            - Name: RAILS_ENV
+              Value: !Ref Environment
+            - Name: PORT
+              Value: !Sub "${RailsContainerPort}"
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref CloudWatchLogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: rails
+          HealthCheck:
+            Command:
+              - CMD-SHELL
+              - !Sub curl -f http://localhost:${RailsContainerPort}/health || exit 1
+            Interval: 30
+            Timeout: 5
+            Retries: 3
+            StartPeriod: 60
+          # Secrets pulled from SSM/SecretsManager — add as needed
+          # Secrets:
+          #   - Name: DATABASE_URL
+          #     ValueFrom: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${Environment}/${AppName}/DATABASE_URL
+
+Outputs:
+  TaskDefinitionArn:
+    Description: Task Definition ARN
+    Value: !Ref TaskDefinition
+    Export:
+      Name: !Sub ${AWS::StackName}-TaskDefinitionArn

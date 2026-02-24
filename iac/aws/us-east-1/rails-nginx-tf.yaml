@@ -1,0 +1,23 @@
+Description: Main CloudFormation template for Rails + Nginx for Task Definition.
+AWSTemplateFormatVersion: '2010-09-09'
+Resources:
+  TaskDefDoubleStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: IAMStack
+    Properties:
+      TemplateURL: https://s3.amazonaws.com/my-cfn-templates-bucket/templates/rails-nginx-tf.yaml
+      Parameters:
+        Environment:        dev
+        AppName:            myapp
+        RailsImage:         123456789012.dkr.ecr.us-east-1.amazonaws.com/myapp-rails:latest
+        NginxImage:         123456789012.dkr.ecr.us-east-1.amazonaws.com/myapp-nginx:latest
+        RailsContainerPort: 3000
+        NginxContainerPort: 80
+        TaskCPU:            512
+        TaskMemory:         1024
+        TaskRoleArn:        !GetAtt IAMStack.Outputs.TaskRoleArn
+        ExecutionRoleArn:   !GetAtt IAMStack.Outputs.ExecutionRoleArn
+Outputs:
+  TaskDefinitionArn:
+    Description: ARN of the ECS Task Definition with Rails and Nginx
+    Value: !GetAtt TaskDefDoubleStack.Outputs.TaskDefArn

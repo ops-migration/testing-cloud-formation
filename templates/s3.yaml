@@ -1,0 +1,59 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: S3 Nested Stack - Application bucket for dev environment
+
+Parameters:
+  Environment:
+    Type: String
+
+  BucketNames:
+    Type: CommaDelimitedList
+    Description: S3 bucket name for application (must be globally unique)
+
+Resources:
+  S3Bucket0:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Select [0, !Ref BucketNames]
+      AccessControl: Private
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      Tags:
+        - Key: Name
+          Value: !Select [0, !Ref BucketNames]
+        - Key: Environment
+          Value: !Ref Environment
+
+  S3Bucket1:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Select [1, !Ref BucketNames]
+      AccessControl: Private
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      Tags:
+        - Key: Name
+          Value: !Select [1, !Ref BucketNames]
+        - Key: Environment
+          Value: !Ref Environment
+
+Outputs:
+  S3BucketName:
+    Description: S3 Bucket Name
+    Value: !Ref S3Bucket0
+    Export:
+      Name: !Sub ${AWS::StackName}-S3BucketName
+
