@@ -100,20 +100,20 @@ Resources:
           Value: Private
 
   # ── NAT Gateway (single, dev cost-saving) ────────────────────────────────
-  ElasticIP:
-    Type: AWS::EC2::EIP
-    DependsOn: VPCGatewayAttachment
-    Properties:
-      Domain: vpc
+  # ElasticIP:
+  #   Type: AWS::EC2::EIP
+  #   DependsOn: VPCGatewayAttachment
+  #   Properties:
+  #     Domain: vpc
 
-  NatGateway:
-    Type: AWS::EC2::NatGateway
-    Properties:
-      AllocationId: !GetAtt ElasticIP.AllocationId
-      SubnetId: !Ref PublicSubnet1
-      Tags:
-        - Key: Name
-          Value: !Sub ${Environment}-nat-gw
+  # NatGateway:
+  #   Type: AWS::EC2::NatGateway
+  #   Properties:
+  #     AllocationId: !GetAtt ElasticIP.AllocationId
+  #     SubnetId: !Ref PublicSubnet1
+  #     Tags:
+  #       - Key: Name
+  #         Value: !Sub ${Environment}-nat-gw
 
   # ── Route Tables ──────────────────────────────────────────────────────────
   PublicRouteTable:
