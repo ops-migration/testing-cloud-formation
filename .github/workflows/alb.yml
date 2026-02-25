@@ -4,13 +4,9 @@ on:
   push:
     branches:
       - dev-i
-    paths:
-      - 'iac/aws/us-east-1/alb.yaml'
 
 jobs:
   deploy:
     uses: ops-migration/central-shared-workflow/.github/workflows/cd-templates.yml@main
     with:
-      aws-region: "us-east-1"
-      cf-stack-name: "alb-stack"
-      template-file: "alb.yaml"
+      cf-stack-name: "dev-stack"
