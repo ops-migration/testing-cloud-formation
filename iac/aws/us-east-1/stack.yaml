@@ -45,6 +45,8 @@ Resources:
         Environment: dev
         AppName: myapp
 
+#---------------------------------------------------------------
+
 Outputs:
   ECSClusterName:
     Description: ECS Cluster Name
