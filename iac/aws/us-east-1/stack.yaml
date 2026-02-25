@@ -1,0 +1,54 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: ALB Nested Stack - Internet-facing Application Load Balancer
+Resources:
+  ALBStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://ecs-migration-cloud-formation-templates.s3.us-east-1.amazonaws.com/templates/alb.yaml
+      Parameters:
+        Environment: dev
+        VpcId: vpc-0abc1234def567890 # Replace with actual VPC ID
+        PublicSubnet1: subnet-0123456789abcdef0 # Replace with actual Public Subnet 1 ID
+        PublicSubnet2: subnet-0fedcba9876543210 # Replace with actual Public Subnet 2 ID
+      Tags:
+        - Key: Environment
+          Value: dev
+        - Key: ManagedBy
+          Value: CloudFormation
+
+#---------------------------------------------------------------
+
+  ECSStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://s3.amazonaws.com/cf-templates-bucket/templates/ecs.yaml
+      Parameters:
+        Environment: dev
+        VpcId: vpc-0abc1234def567890
+        PrivateSubnet1: subnet-0aaa1111bbb22222
+        PrivateSubnet2: subnet-0ccc3333ddd44444
+        KeyPairName: dev-ecs-keypair
+        InstanceType: t4g.small
+      Tags:
+        - Key: Environment
+          Value: dev
+        - Key: ManagedBy
+          Value: CloudFormation
+
+#---------------------------------------------------------------
+
+  IAMStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://s3.amazonaws.com/my-cfn-templates-bucket/templates/iam-execution.yaml
+      Parameters:
+        Environment: dev
+        AppName: myapp
+
+Outputs:
+  ECSClusterName:
+    Description: ECS Cluster Name
+    Value: !GetAtt ECSStack.Outputs.ECSClusterName
+  ExecutionRoleArn:
+    Description: IAM Execution Role ARN
+    Value: !GetAtt IAMStack.Outputs.ExecutionRoleArn
