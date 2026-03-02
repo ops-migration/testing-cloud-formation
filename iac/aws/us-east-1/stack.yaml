@@ -37,7 +37,6 @@ Resources:
         - Key: ManagedBy
           Value: CloudFormation
 
-
 #---------------------------------------------------------------
 
   IAMStack:
