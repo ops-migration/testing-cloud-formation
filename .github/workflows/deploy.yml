@@ -1,4 +1,4 @@
-name: Deploy CloudFormation Templates 
+name: Deploy CloudFormation Templates
 
 on:
   push:
