@@ -25,8 +25,8 @@ Resources:
       Parameters:
         Environment: dev
         VpcId: vpc-04c6d87c521fddb25
-        PublicSubnet1: subnet-0fc41a16b6ecbb14d 
-        PublicSubnet2: subnet-0f520177833df3f2e 
+        PrivateSubnet1: subnet-0eabd0999a1e9300b
+        PrivateSubnet2: subnet-03f8f438576701c78
         KeyPairName: dev-ecs-keypair
         InstanceType: t4g.small
       Tags:
