@@ -8,12 +8,9 @@ Parameters:
     Type: String
   TaskRolePolicyJson:
     Type: String
-    Description: Full IAM policy document JSON for the ECS Task Role
-
+    Description: S3 URI of the task policy JSON file (e.g. s3://my-bucket/task-policy.json)
 
 Resources:
-  # ── Task Role ──────────────────────────────────────────────────────────────
-  # Used by the running container — app-level AWS permissions
   ECSTaskRole:
     Type: AWS::IAM::Role
     Properties:
@@ -27,7 +24,12 @@ Resources:
             Action: sts:AssumeRole
       Policies:
         - PolicyName: !Sub ${Environment}-${AppName}-task-policy
-          PolicyDocument: !Sub ${TaskRolePolicyJson}
+          PolicyDocument:
+            'Fn::Transform':
+              Name: AWS::Include
+              Parameters:
+                Location: !Ref TaskRolePolicyJson
+
 Outputs:
   TaskRoleArn:
     Description: Task Role ARN
