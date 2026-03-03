@@ -30,7 +30,7 @@ Resources:
         PrivateSubnet1: subnet-0eabd0999a1e9300b
         PrivateSubnet2: subnet-03f8f438576701c78
         KeyPairName: dev-ecs-keypair
-        InstanceType: t4g.medium
+        InstanceType: m7i-flex.large
         ALBSecurityGroup: !GetAtt ALBStack.Outputs.ALBSecurityGroupId
         ALBTargetGroupArn: !GetAtt ALBStack.Outputs.ALBTargetGroupArn
       Tags:
