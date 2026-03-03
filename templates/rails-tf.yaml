@@ -46,7 +46,7 @@ Resources:
           Essential: true
           PortMappings:
             - ContainerPort: !Ref RailsContainerPort
-              HostPort: 0          # dynamic port mapping for EC2
+              HostPort: !Ref RailsContainerPort
               Protocol: tcp
           Environment:
             - Name: RAILS_ENV
