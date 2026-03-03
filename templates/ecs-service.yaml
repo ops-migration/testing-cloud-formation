@@ -18,29 +18,27 @@ Parameters:
   ContainerPort:
     Type: Number
     Default: 80
-
-  # Service sizing
+  VpcSubnetIds:
+    Type: CommaDelimitedList
+    Description: Subnets for the ECS service ENIs
+  SecurityGroupIds:
+    Type: CommaDelimitedList
+    Description: Security groups for the ECS service ENIs
   DesiredCount:
     Type: Number
     Default: 1
-
-  # Auto Scaling bounds
   ScalingMinCapacity:
     Type: Number
     Default: 1
   ScalingMaxCapacity:
     Type: Number
     Default: 4
-
-  # CPU scale-out threshold (%)
   CPUScaleOutThreshold:
     Type: Number
     Default: 70
   CPUScaleInThreshold:
     Type: Number
     Default: 30
-
-  # Memory scale-out threshold (%)
   MemoryScaleOutThreshold:
     Type: Number
     Default: 75
@@ -65,6 +63,11 @@ Resources:
         DeploymentCircuitBreaker:
           Enable: true
           Rollback: true
+      NetworkConfiguration:                        
+        AwsvpcConfiguration:
+          AssignPublicIp: DISABLED
+          Subnets: !Ref VpcSubnetIds
+          SecurityGroups: !Ref SecurityGroupIds
       LoadBalancers:
         - ContainerName: !Ref ContainerName
           ContainerPort: !Ref ContainerPort
