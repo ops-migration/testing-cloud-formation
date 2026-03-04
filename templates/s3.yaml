@@ -13,7 +13,7 @@ Resources:
   S3Bucket0:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Select [0, !Ref BucketNames]
+      BucketName: !Sub [0, !Ref BucketNames]
       AccessControl: Private
       BucketEncryption:
         ServerSideEncryptionConfiguration:
@@ -26,14 +26,14 @@ Resources:
         RestrictPublicBuckets: true
       Tags:
         - Key: Name
-          Value: !Select [0, !Ref BucketNames]
+          Value: !Sub [0, !Ref BucketNames]
         - Key: Environment
           Value: !Ref Environment
 
   S3Bucket1:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Select [1, !Ref BucketNames]
+      BucketName: !Sub [1, !Ref BucketNames]
       AccessControl: Private
       BucketEncryption:
         ServerSideEncryptionConfiguration:
@@ -46,7 +46,7 @@ Resources:
         RestrictPublicBuckets: true
       Tags:
         - Key: Name
-          Value: !Select [1, !Ref BucketNames]
+          Value: !Sub [1, !Ref BucketNames]
         - Key: Environment
           Value: !Ref Environment
 

@@ -125,3 +125,9 @@ Outputs:
     Value: !Ref ALBTargetGroup
     Export:
       Name: !Sub ${AWS::StackName}-ALBTargetGroupArn
+      
+  ALBHTTPListenerArn:
+    Description: ALB HTTP Listener ARN
+    Value: !Ref ALBHTTPListener
+    Export:
+      Name: !Sub '${AWS::StackName}-ALBHTTPListenerArn'

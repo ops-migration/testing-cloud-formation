@@ -5,30 +5,19 @@ Parameters:
   Environment:
     Type: String
     Description: Environment name
-  
   ApplicationName:
     Type: CommaDelimitedList
     Description: Name of the application
-  
   ImageTagMutability:
     Type: String
-    Description: The tag mutability setting for the repository
-    AllowedValues:
-      - MUTABLE
-      - IMMUTABLE
+    AllowedValues: [MUTABLE, IMMUTABLE]
     Default: MUTABLE
-  
   ScanOnPush:
     Type: String
-    Description: Enable image scanning on push
-    AllowedValues:
-      - 'true'
-      - 'false'
+    AllowedValues: ['true', 'false']
     Default: 'true'
-  
   LifecyclePolicyText:
     Type: String
-    Description: JSON lifecycle policy for ECR
     Default: |
       {
         "rules": [
@@ -40,9 +29,7 @@ Parameters:
               "countType": "imageCountMoreThan",
               "countNumber": 20
             },
-            "action": {
-              "type": "expire"
-            }
+            "action": { "type": "expire" }
           }
         ]
       }
@@ -51,7 +38,9 @@ Resources:
   ECRRepository0:
     Type: AWS::ECR::Repository
     Properties:
-      RepositoryName: !Select [0, !Ref ApplicationName]
+      RepositoryName: !Sub           # ✅ !Sub + variable map replaces bare !Select
+        - '${Environment}-${AppName}'
+        - AppName: !Select [0, !Ref ApplicationName]
       ImageTagMutability: !Ref ImageTagMutability
       ImageScanningConfiguration:
         ScanOnPush: !Ref ScanOnPush
@@ -59,18 +48,24 @@ Resources:
         LifecyclePolicyText: !Ref LifecyclePolicyText
       Tags:
         - Key: Name
-          Value: !Select [1, !Ref ApplicationName]
+          Value: !Sub              # ✅ Fixed: was incorrectly using index 1
+            - '${AppName}'
+            - AppName: !Select [0, !Ref ApplicationName]
         - Key: Environment
           Value: !Ref Environment
         - Key: Application
-          Value: !Ref ApplicationName
+          Value: !Sub              # ✅ Fixed: !Ref on CommaDelimitedList returns raw "a,b" string
+            - '${AppName}'
+            - AppName: !Select [0, !Ref ApplicationName]
         - Key: ManagedBy
           Value: CloudFormation
 
   ECRRepository1:
     Type: AWS::ECR::Repository
     Properties:
-      RepositoryName: !Select [1, !Ref ApplicationName]
+      RepositoryName: !Sub
+        - '${Environment}-${AppName}'
+        - AppName: !Select [1, !Ref ApplicationName]
       ImageTagMutability: !Ref ImageTagMutability
       ImageScanningConfiguration:
         ScanOnPush: !Ref ScanOnPush
@@ -78,23 +73,27 @@ Resources:
         LifecyclePolicyText: !Ref LifecyclePolicyText
       Tags:
         - Key: Name
-          Value: !Select [1, !Ref ApplicationName]
+          Value: !Sub
+            - '${AppName}'
+            - AppName: !Select [1, !Ref ApplicationName]
         - Key: Environment
           Value: !Ref Environment
         - Key: Application
-          Value: !Ref ApplicationName
+          Value: !Sub
+            - '${AppName}'
+            - AppName: !Select [1, !Ref ApplicationName]
         - Key: ManagedBy
           Value: CloudFormation
 
 Outputs:
-  RepositoryName:
-    Description: Name of the ECR Repository
+  RepositoryName0:
+    Description: Name of ECR Repository 0
     Value: !Ref ECRRepository0
     Export:
-      Name: !Sub '${AWS::StackName}-RepositoryName0'
+      Name: !Sub '${AWS::StackName}-RepositoryName0'   # ✅ Already correct !Sub usage
 
   RepositoryName1:
-    Description: Name of the ECR Repository 1
+    Description: Name of ECR Repository 1
     Value: !Ref ECRRepository1
     Export:
       Name: !Sub '${AWS::StackName}-RepositoryName1'
