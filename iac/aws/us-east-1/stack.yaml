@@ -84,7 +84,6 @@ Resources:
       Parameters:
         Environment: dev
         VpcId: '{{resolve:ssm:/cfn/vpc/VpcId}}'
-        ALBListenerArn: '{{{resolve:ssm:/cfn/alb/HTTPListenerArn}}}'
       Tags:
         - Key: Environment
           Value: dev
