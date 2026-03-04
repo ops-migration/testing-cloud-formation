@@ -25,8 +25,8 @@ Resources:
       Parameters:
         Environment: dev
         VpcId: '{{resolve:ssm:/cfn/vpc/VpcId}}'
-        PublicSubnet1: '{{resolve:ssm:/cfn/vpc/PublicSubnet1}}'
-        PublicSubnet2: '{{resolve:ssm:/cfn/vpc/PublicSubnet2}}'
+        PrivateSubnet1: '{{resolve:ssm:/cfn/vpc/PrivateSubnet1}}'
+        PrivateSubnet2: '{{resolve:ssm:/cfn/vpc/PrivateSubnet2}}'
         KeyPairName: dev-ecs-keypair
         InstanceType: m7i-flex.large
         ALBSecurityGroup: !GetAtt ALBStack.Outputs.ALBSecurityGroupId
@@ -83,6 +83,7 @@ Resources:
       TemplateURL: https://ecs-migration-cloud-formation-templates.s3.us-east-1.amazonaws.com/templates/target-group.yaml
       Parameters:
         Environment: dev
+        VpcId: '{{resolve:ssm:/cfn/vpc/VpcId}}'
       Tags:
         - Key: Environment
           Value: dev
@@ -121,5 +122,4 @@ Outputs:
   ExecutionRoleArn:
     Description: IAM Execution Role ARN
     Value: !GetAtt IAMStack.Outputs.ExecutionRoleArn
-    
     
