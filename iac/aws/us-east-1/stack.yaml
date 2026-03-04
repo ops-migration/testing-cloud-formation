@@ -83,10 +83,9 @@ Resources:
       TemplateURL: https://ecs-migration-cloud-formation-templates.s3.us-east-1.amazonaws.com/templates/target-group.yaml
       Parameters:
         Environment: dev
-        AcquiflowName: acquiflow
       Tags:
         - Key: Environment
-          Value: dev    
+          Value: dev
         - Key: ManagedBy
           Value: CloudFormation 
 
