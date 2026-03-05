@@ -90,7 +90,7 @@ Resources:
         - Key: Environment
           Value: dev
         - Key: ManagedBy
-          Value: CloudFormation 
+          Value: CloudFormation  
 
   #---- 7. ECR Repository ------------------------------------------------------------
   ECRStack:
