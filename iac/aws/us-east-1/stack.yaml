@@ -92,18 +92,33 @@ Resources:
         - Key: ManagedBy
           Value: CloudFormation  
 
-  #---- 7. ECR Repository ------------------------------------------------------------
-  ECRStack:
-    Type: AWS::CloudFormation::Stack    
-    Properties: 
-      TemplateURL: https://ecs-migration-cloud-formation-templates.s3.us-east-1.amazonaws.com/templates/ecr.yaml
-      Parameters:
-        Environment: dev
-      Tags:
-        - Key: Environment
-          Value: dev    
-        - Key: ManagedBy
-          Value: CloudFormation
+  #---- 7. Function Manager ECR Repository ------------------------------------------------------------
+FunctionManagerECRStack:
+  Type: AWS::CloudFormation::Stack
+  Properties:
+    TemplateURL: https://ecs-migration-cloud-formation-templates.s3.us-east-1.amazonaws.com/templates/ecr.yaml
+    Parameters:
+      Environment: dev
+      RepoName: function-manager        
+    Tags:
+      - Key: Environment
+        Value: dev
+      - Key: ManagedBy
+        Value: CloudFormation
+    
+  #---- ECR: acquiflow ------------------------------------------------------------
+AcquiflowECRStack:
+  Type: AWS::CloudFormation::Stack
+  Properties:
+    TemplateURL: https://ecs-migration-cloud-formation-templates.s3.us-east-1.amazonaws.com/templates/ecr.yaml
+    Parameters:
+      Environment: dev
+      RepoName: acquiflow               # ← Creates dev-acquiflow
+    Tags:
+      - Key: Environment
+        Value: dev
+      - Key: ManagedBy
+        Value: CloudFormation
 
   #---- 8. Secret Manager ------------------------------------------------------------
   SecretsManagerStack:
