@@ -63,16 +63,31 @@ Resources:
         - Key: ManagedBy
           Value: CloudFormation
 
-  #---- 5. IAM Task Role ----------------------------------------------------------
-  IAMTaskStack:
+  #---- 5. IAM Task Role: function-manager ------------------------------------
+  FunctionManagerIAMTaskStack:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: https://ecs-migration-cloud-formation-templates.s3.us-east-1.amazonaws.com/templates/iam-task.yaml
       Parameters:
         Environment: dev
+        AppName: function-manager         # ← resolves to dev-function-manager-*
       Tags:
         - Key: Environment
-          Value: dev    
+          Value: dev
+        - Key: ManagedBy
+          Value: CloudFormation
+
+  #---- 5b. IAM Task Role: acquiflow ------------------------------------------
+  AcquiflowIAMTaskStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://ecs-migration-cloud-formation-templates.s3.us-east-1.amazonaws.com/templates/iam-task.yaml
+      Parameters:
+        Environment: dev
+        AppName: acquiflow                # ← resolves to dev-acquiflow-*
+      Tags:
+        - Key: Environment
+          Value: dev
         - Key: ManagedBy
           Value: CloudFormation
 
