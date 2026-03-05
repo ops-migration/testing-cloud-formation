@@ -107,7 +107,7 @@ Resources:
         - Key: ManagedBy
           Value: CloudFormation  
 
-  #---- 7. Function Manager ECR Repository ---------------------------------------
+  #---- 7. Function Manager ECR Repository --------------------------------------
   FunctionManagerECRStack:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -121,7 +121,7 @@ Resources:
         - Key: ManagedBy
           Value: CloudFormation
     
-  #---- ECR: acquiflow ------------------------------------------------------------
+  #---- ECR: acquiflow -----------------------------------------------------------
   AcquiflowECRStack:
     Type: AWS::CloudFormation::Stack
     Properties:
