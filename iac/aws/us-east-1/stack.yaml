@@ -109,7 +109,7 @@ Resources:
   SecretsManagerStack:
     Type: AWS::CloudFormation::Stack  
     Properties: 
-      TemplateURL: https://ecs-migration-cloud-formation-templates.s3.us-east-1.amazonaws.com/templates/secrets-manager.yaml
+      TemplateURL: https://ecs-migration-cloud-formation-templates.s3.us-east-1.amazonaws.com/templates/secret-manager.yaml
       Parameters:
         Environment: dev
       Tags:
