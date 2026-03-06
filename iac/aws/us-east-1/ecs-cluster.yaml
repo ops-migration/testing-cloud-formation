@@ -15,7 +15,7 @@ Resources:
         InstanceType: m7i-flex.large
         ALBSecurityGroup: '{{resolve:ssm:/cfn/dev/alb/SecurityGroupId}}'
         ALBTargetGroupArn: '{{resolve:ssm:/cfn/dev/alb/TargetGroupArn}}'
-        AmiId: ami-0071c8c431eea0edb
+        AmiId: ami-0aae19d30bab785d3
       Tags:
         - Key: Environment
           Value: dev
