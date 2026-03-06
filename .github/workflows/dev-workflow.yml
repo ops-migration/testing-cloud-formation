@@ -13,4 +13,4 @@ jobs:
     with:
       environment: "dev"
       stacks-path: "iac/aws/us-east-1"
-
+      stack-name: "dev-stack"
