@@ -15,4 +15,6 @@ Resources:
         - Key: Environment
           Value: dev
         - Key: ManagedBy
-          Value: CloudFormation 
+          Value: CloudFormation
+        - Key: Name
+          Value: dev-alb  
