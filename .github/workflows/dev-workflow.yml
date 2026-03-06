@@ -1,14 +1,76 @@
+# ✅ Simplified — no separate detect-changes job needed
+# core-infrastructure: .github/workflows/cd-iac-template.yml
+
 name: CD - iac-template
 
 on:
   push:
     branches:
       - dev-i
+    paths:
+      - 'iac/aws/us-east-1/**'
 
 jobs:
   deploy:
     uses: ops-migration/github_shared_templates/.github/workflows/cd-templates.yml@main
     with:
       environment: "dev"
+      stacks-path: "iac/aws/us-east-1"
+      commits-json: ${{ toJson(github.event.commits) }}   # ← pass raw JSON string
     secrets:
-      github-token: ${{ secrets.PAT_TOKEN }}
+      github-token: ${{ secrets.GITHUB_TOKEN }}
+
+# name: CD - iac-template
+
+# on:
+#   push:
+#     branches:
+#       - dev-i
+#     paths:
+#       - 'iac/aws/us-east-1/**'      
+
+# jobs:
+#   deploy:
+#     uses: ops-migration/github_shared_templates/.github/workflows/cd-templates.yml@main
+#     with:
+#       environment: "dev"
+#     secrets:
+#       github-token: ${{ secrets.PAT_TOKEN }}
+
+
+
+
+# jobs:
+#   detect-changes:
+#     name: Detect Changed Stack Files
+#     runs-on: 
+#       - codebuild-ecs-workflow-${{ github.run_id }}-${{ github.run_attempt }}
+#     outputs:
+#       changed-files: ${{ steps.detect.outputs.changed-files }}
+
+#     steps:
+#       - name: Detect changed YAML files
+#         id: detect
+#         run: |
+#           # Extract all changed/added files from this push event
+#           CHANGED=$(echo '${{ toJson(github.event.commits) }}' \
+#             | jq -r '[.[].added[], .[].modified[]] | .[]' \
+#             | grep "^iac/aws/us-east-1/.*\.yaml$" \
+#             | tr '\n' ' ' \
+#             || true)
+
+#           echo "Changed files: $CHANGED"
+#           echo "changed-files<<EOF" >> $GITHUB_OUTPUT
+#           echo "$CHANGED"           >> $GITHUB_OUTPUT
+#           echo "EOF"                >> $GITHUB_OUTPUT
+
+#   deploy:
+#     needs: detect-changes
+#     if: needs.detect-changes.outputs.changed-files != ''
+#     uses: ops-migration/github_shared_templates/.github/workflows/cd-templates.yml@main
+#     with:
+#       environment: "dev"
+#       stacks-path: "iac/aws/us-east-1"
+#       changed-files: ${{ needs.detect-changes.outputs.changed-files }}
+#     secrets:
+#       github-token: ${{ secrets.GITHUB_TOKEN }}
