@@ -26,4 +26,4 @@ Resources:
         - Key: Environment
           Value: dev
         - Key: ManagedBy
-          Value: CloudFormation
+          Value: CloudFormatio
